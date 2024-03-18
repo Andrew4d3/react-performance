@@ -1,6 +1,4 @@
-import makeFilterCitiesWorker from 'workerize!./filter-cities'
-
-const {getItems} = makeFilterCitiesWorker()
+import {getItems} from './filter-cities'
 
 export {getItems}
 
