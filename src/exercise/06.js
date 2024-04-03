@@ -1,6 +1,6 @@
 // Fix "perf death by a thousand cuts"
-// 💯 separate contexts
-// http://localhost:3000/isolated/final/06.extra-1.js
+// 💯 write an HOC to get a slice of app state
+// http://localhost:3000/isolated/final/06.extra-3.js
 
 import * as React from 'react'
 import {
@@ -105,14 +105,17 @@ function Grid() {
 }
 Grid = React.memo(Grid)
 
-function Cell({row, column}) {
-  const state = useAppState()
-  const cell = state.grid[row][column]
-
-  return <CellImpl row={row} column={column} cell={cell} />
+function withStateSlice(Comp, slice) {
+  const MemoComp = React.memo(Comp)
+  function Wrapper(props, ref) {
+    const state = useAppState()
+    return <MemoComp ref={ref} state={slice(state, props)} {...props} />
+  }
+  Wrapper.displayName = `withStateSlice(${Comp.displayName || Comp.name})`
+  return React.memo(React.forwardRef(Wrapper))
 }
 
-function CellImpl({row, column, cell}) {
+function Cell({state: cell, row, column}) {
   const dispatch = useAppDispatch()
   const handleClick = () => dispatch({type: 'UPDATE_GRID_CELL', row, column})
   return (
@@ -128,8 +131,7 @@ function CellImpl({row, column, cell}) {
     </button>
   )
 }
-
-CellImpl = React.memo(CellImpl)
+Cell = withStateSlice(Cell, (state, {row, column}) => state.grid[row][column])
 
 function DogNameInput() {
   const [state, dispatch] = useDogState()
@@ -157,6 +159,7 @@ function DogNameInput() {
     </form>
   )
 }
+
 function App() {
   const forceRerender = useForceRerender()
   return (
